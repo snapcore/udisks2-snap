@@ -1,0 +1,135 @@
+name: udisks2
+version: 2.9.4
+description: Storage devices management service
+summary: |
+    Udisks2 provides a dbus service that can query and manager
+    storages devices as well as a command-line tool.
+confinement: strict
+base: core22
+
+slots:
+  udisks2-dbus:
+    interface: dbus
+    bus: system
+    name: org.freedesktop.UDisks2
+
+plugs:
+  udisks2-dbus-client:
+    interface: dbus
+    bus: system
+    name: org.freedesktop.UDisks2
+
+  udisks2-support:
+    interface: udisks2-support
+    udev-file: lib/udev/rules.d/80-udisks2.rules
+
+  polkit:
+    action-prefix: org.freedesktop.udisks2
+
+apps:
+  udisksd:
+    command: usr/libexec/udisks2/udisksd
+    daemon: dbus
+    plugs:
+      - udisks2-support
+      - hardware-observe
+      - mount-observe
+      - polkit
+    daemon-scope: system
+    activates-on:
+      - udisks2-dbus
+
+  udisksctl:
+    command: usr/bin/udisksctl
+    plugs:
+      - udisks2-dbus-client
+
+layout:
+  /usr/var/lib/udisks2:
+    bind: $SNAP/usr/var/lib/udisks2
+  /usr/etc/udisks2:
+    bind: $SNAP/usr/etc/udisks2
+  /etc/libblockdev/conf.d:
+    bind: $SNAP/etc/libblockdev/conf.d
+
+parts:
+  meson-deps:
+    plugin: python
+    source: https://github.com/mesonbuild/meson/releases/download/0.63.0/meson-0.63.0.tar.gz
+    build-packages:
+      - ninja-build
+      - python3-distutils-extra
+    prime:
+      - -bin
+      - -etc
+      - -lib
+      - -share
+      - -usr
+  polkit:
+    after:
+      - meson-deps
+    build-packages:
+      - libglib2.0-dev
+      - duktape-dev
+      - libpam0g-dev
+      - libgirepository1.0-dev
+      - libsystemd-dev
+      - systemd
+    stage-packages:
+      - libduktape207
+    meson-parameters:
+      - -Dsession_tracking=libsystemd-login
+      - -Dauthfw=pam
+      - -Dpolkitd_user=snap_daemon
+    plugin: meson
+    source-type: tar
+    source: https://www.freedesktop.org/software/polkit/releases/polkit-121.tar.gz
+
+  udisks2:
+    build-environment:
+      - XDG_DATA_DIRS: "/usr/local/share/:/usr/share/:${CRAFT_STAGE}/usr/share/"
+    after:
+      - polkit
+    build-packages:
+      - pkg-config
+      - libglib2.0-dev
+      - libgudev-1.0-dev
+      - libblockdev-dev
+      - libatasmart-dev
+      - libblockdev-part-dev
+      - libblockdev-loop-dev
+      - libblockdev-swap-dev
+      - libblockdev-mdraid-dev
+      - libblockdev-fs-dev
+      - libblockdev-crypto-dev
+      - gettext
+      - xsltproc
+      - docbook-xsl
+    stage-packages:
+      - libgudev-1.0-0
+      - libblockdev2
+      - libblockdev-utils2
+      - libatasmart4
+      - libblockdev-swap2
+      - libblockdev-loop2
+      - libblockdev-part2
+      - libblockdev-loop2
+      - libblockdev-swap2
+      - libblockdev-mdraid2
+      - libblockdev-fs2
+      - libblockdev-crypto2
+    plugin: autotools
+    autotools-configure-parameters:
+      - --prefix=/usr
+      - --enable-fhs-media
+    source-type: tar
+    source: https://github.com/storaged-project/udisks/releases/download/udisks-2.9.4/udisks-2.9.4.tar.bz2
+
+  policy:
+    plugin: nil
+    after:
+      - udisks2
+    override-build: |
+      install -Dm644 \
+        "${CRAFT_STAGE}/usr/share/polkit-1/actions/org.freedesktop.UDisks2.policy" \
+        "${CRAFT_PART_INSTALL}/meta/polkit/polkit.org.freedesktop.UDisks2.policy"
