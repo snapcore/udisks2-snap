@@ -1,7 +1,7 @@
 name: udisks2
 version: 2.9.4
-description: Storage devices management service
-summary: |
+summary: Storage devices management service
+description: |
     Udisks2 provides a dbus service that can query and manager
     storages devices as well as a command-line tool.
 confinement: strict
