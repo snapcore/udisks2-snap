@@ -13,15 +13,12 @@ slots:
     bus: system
     name: org.freedesktop.UDisks2
 
-plugs:
-  udisks2-dbus-client:
-    interface: dbus
-    bus: system
-    name: org.freedesktop.UDisks2
-
-  udisks2-support:
-    interface: udisks2-support
+  udisks2:
     udev-file: lib/udev/rules.d/80-udisks2.rules
+
+plugs:
+  udisks2-client:
+    interface: udisks2
 
   polkit:
     action-prefix: org.freedesktop.udisks2
@@ -31,10 +28,11 @@ apps:
     command: usr/libexec/udisks2/udisksd
     daemon: dbus
     plugs:
-      - udisks2-support
       - hardware-observe
       - mount-observe
       - polkit
+    slots:
+      - udisks2
     daemon-scope: system
     activates-on:
       - udisks2-dbus
@@ -42,7 +40,7 @@ apps:
   udisksctl:
     command: usr/bin/udisksctl
     plugs:
-      - udisks2-dbus-client
+      - udisks2-client
 
 layout:
   /usr/var/lib/udisks2:
