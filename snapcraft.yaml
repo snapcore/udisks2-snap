@@ -122,6 +122,9 @@ parts:
       - --enable-fhs-media
     source-type: tar
     source: https://github.com/storaged-project/udisks/releases/download/udisks-2.9.4/udisks-2.9.4.tar.bz2
+    override-pull: |
+      craftctl default
+      patch -p1 <"${CRAFT_PROJECT_DIR}/proc-mountinfo.patch"
 
   policy:
     plugin: nil

@@ -1,0 +1,51 @@
+diff -ur udisks-2.9.4.old/src/udisksmountmonitor.c udisks-2.9.4/src/udisksmountmonitor.c
+--- udisks-2.9.4.old/src/udisksmountmonitor.c	2022-11-17 12:33:34.890069659 +0100
++++ udisks-2.9.4/src/udisksmountmonitor.c	2022-11-17 12:34:05.944246995 +0100
+@@ -52,7 +52,7 @@
+  *
+  * This type is used for monitoring mounted devices and swap devices
+  * in use. On Linux, this is done by inspecting and monitoring the
+- * <literal>/proc/self/mountinfo</literal> and
++ * <literal>/proc/1/mountinfo</literal> and
+  * <literal>/proc/swaps</literal> files.
+  */
+ 
+@@ -330,7 +330,7 @@
+   udisks_mount_monitor_ensure (monitor);
+ 
+   error = NULL;
+-  monitor->mounts_channel = g_io_channel_new_file ("/proc/self/mountinfo", "r", &error);
++  monitor->mounts_channel = g_io_channel_new_file ("/proc/1/mountinfo", "r", &error);
+   if (monitor->mounts_channel != NULL)
+     {
+       monitor->mounts_watch_source = g_io_create_watch (monitor->mounts_channel, G_IO_ERR);
+@@ -351,7 +351,7 @@
+     }
+   else
+     {
+-      g_error ("No /proc/self/mountinfo file: %s", error->message);
++      g_error ("No /proc/1/mountinfo file: %s", error->message);
+       g_clear_error (&error);
+     }
+ 
+@@ -447,9 +447,9 @@
+ {
+   GError *error = NULL;
+ 
+-  if (!g_file_get_contents ("/proc/self/mountinfo", contents, length, &error))
++  if (!g_file_get_contents ("/proc/1/mountinfo", contents, length, &error))
+     {
+-      udisks_warning ("Error reading /proc/self/mountinfo: %s (%s, %d)",
++      udisks_warning ("Error reading /proc/1/mountinfo: %s (%s, %d)",
+                       error->message, g_quark_to_string (error->domain), error->code);
+       g_clear_error (&error);
+       return FALSE;
+@@ -465,7 +465,7 @@
+   gchar **lines;
+   guint n;
+ 
+-  /* See Documentation/filesystems/proc.txt for the format of /proc/self/mountinfo
++  /* See Documentation/filesystems/proc.txt for the format of /proc/1/mountinfo
+    *
+    * Note that things like space are encoded as \020.
+    */
