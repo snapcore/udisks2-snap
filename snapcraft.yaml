@@ -51,30 +51,10 @@ layout:
     bind: $SNAP/etc/libblockdev/conf.d
 
 parts:
-  polkit:
-    build-packages:
-      - meson
-      - libglib2.0-dev
-      - duktape-dev
-      - libpam0g-dev
-      - libgirepository1.0-dev
-      - libsystemd-dev
-      - systemd
-    stage-packages:
-      - libduktape207
-    meson-parameters:
-      - -Dsession_tracking=libsystemd-login
-      - -Dauthfw=pam
-      - -Dpolkitd_user=snap_daemon
-    plugin: meson
-    source-type: tar
-    source: https://www.freedesktop.org/software/polkit/releases/polkit-121.tar.gz
 
   udisks2:
     build-environment:
       - XDG_DATA_DIRS: "/usr/local/share/:/usr/share/:${CRAFT_STAGE}/usr/share/"
-    after:
-      - polkit
     build-packages:
       - meson
       - pkg-config
@@ -88,10 +68,15 @@ parts:
       - libblockdev-mdraid-dev
       - libblockdev-fs-dev
       - libblockdev-crypto-dev
+      - libpolkit-agent-1-dev
+      - libpolkit-gobject-1-dev
       - gettext
       - xsltproc
       - docbook-xsl
+      - polkitd
     stage-packages:
+      - libpolkit-agent-1-0
+      - libpolkit-gobject-1-0
       - libgudev-1.0-0
       - libblockdev2
       - libblockdev-utils2
