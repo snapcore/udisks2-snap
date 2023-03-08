@@ -51,6 +51,14 @@ layout:
     bind: $SNAP/etc/libblockdev/conf.d
 
 parts:
+  udisks2-copyright:
+    plugin: nil
+    stage-packages:
+      - udisks2
+    override-build: |
+      cp -r "${CRAFT_PART_INSTALL}/usr/share/doc" doc
+      rm -rf "${CRAFT_PART_INSTALL}"
+      install -Dm644 -t "${CRAFT_PART_INSTALL}/usr/share/doc/udisks2" doc/udisks2/copyright doc/udisks2/changelog.*
 
   udisks2:
     build-environment:
@@ -93,8 +101,9 @@ parts:
     autotools-configure-parameters:
       - --prefix=/usr
       - --enable-fhs-media
-    source-type: tar
-    source: https://github.com/storaged-project/udisks/releases/download/udisks-2.9.4/udisks-2.9.4.tar.bz2
+    source-type: git
+    source-branch: applied/ubuntu/jammy
+    source: https://git.launchpad.net/ubuntu/+source/udisks2
     override-pull: |
       craftctl default
       patch -p1 <"${CRAFT_PROJECT_DIR}/proc-mountinfo.patch"
