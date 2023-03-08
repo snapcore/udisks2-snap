@@ -51,22 +51,9 @@ layout:
     bind: $SNAP/etc/libblockdev/conf.d
 
 parts:
-  meson-deps:
-    plugin: python
-    source: https://github.com/mesonbuild/meson/releases/download/0.63.0/meson-0.63.0.tar.gz
-    build-packages:
-      - ninja-build
-      - python3-distutils-extra
-    prime:
-      - -bin
-      - -etc
-      - -lib
-      - -share
-      - -usr
   polkit:
-    after:
-      - meson-deps
     build-packages:
+      - meson
       - libglib2.0-dev
       - duktape-dev
       - libpam0g-dev
@@ -89,6 +76,7 @@ parts:
     after:
       - polkit
     build-packages:
+      - meson
       - pkg-config
       - libglib2.0-dev
       - libgudev-1.0-dev
