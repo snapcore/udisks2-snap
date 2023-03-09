@@ -1,0 +1,111 @@
+name: snap
+run-name: Build and publish snap
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+  push:
+    branches:
+      - main
+      - 'release/**'
+
+jobs:
+  build_snap:
+    runs-on: ubuntu-latest
+    outputs:
+      snap_name: ${{ steps.get_name.outputs.snap_name }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: snapcore/action-build@v1
+        id: snapcraft
+      - uses: actions/upload-artifact@v3
+        with:
+          name: snap
+          path: ${{ steps.snapcraft.outputs.snap }}
+      - shell: bash
+        id: get_name
+        env:
+          snap_path: ${{ steps.snapcraft.outputs.snap }}
+        run: |
+          cat <<EOF >>"${GITHUB_OUTPUT}"
+          snap_name=$(basename "${snap_path}")
+          EOF
+
+  test:
+    runs-on: self-hosted
+    needs: build_snap
+    steps:
+      - name: Cleanup job workspace
+        id: cleanup-job-workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+
+      - name: Download the snap artifact
+        id: download
+        uses: actions/download-artifact@v3
+        with:
+          name: snap
+          path: snaps
+
+      - uses: actions/checkout@v3
+        with:
+          path: src
+
+      - uses: actions/checkout@v3
+        with:
+          path: src/ci
+          repository: valentindavid/system-snaps-cicd-tools
+          ref: valentindavid/add-simple-reflash
+
+      - name: Provide built snap to test
+        env:
+          SNAP: ${{ format('{0}/{1}', steps.download.outputs.download-path, needs.build_snap.outputs.snap_name) }}
+        shell: bash
+        run: |
+          mv "${SNAP}" src/udisks2.snap
+
+      - name: Run tests
+        run: |
+          cd src
+          spread google:tests/
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          cd src
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
+
+  publish_snap:
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') }}
+    runs-on: ubuntu-latest
+    needs:
+      - build_snap
+      - test
+    steps:
+      - name: Download the snap artifact
+        id: download
+        uses: actions/download-artifact@v3
+        with:
+          name: snap
+          path: snaps
+      - name: Find the release branch name
+        id: find_branch_name
+        shell: bash
+        run: |
+          set -x
+          release_branch_name="${GITHUB_REF#refs/heads/release/}"
+          cat <<EOF >>"${GITHUB_OUTPUT}"
+          release_branch_name=${release_branch_name}
+          EOF
+      - name: Publish
+        uses: snapcore/action-publish@v1.1.1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_LOGIN }}
+        with:
+          snap: ${{ format('{0}/{1}', steps.download.outputs.download-path, needs.build_snap.outputs.snap_name) }}
+          release: ${{ format('{0}/edge', steps.find_branch_name.outputs.release_branch_name) }}

@@ -1,0 +1,42 @@
+project: udisks2-snap
+
+path: /home/udisks2
+kill-timeout: 50m
+
+environment:
+  SETUPDIR: /home/udisks2
+  PROJECT_PATH: $SETUPDIR
+  CILIB: $PROJECT_PATH/ci
+  SNAP: $PROJECT_PATH/udisks2.snap
+
+backends:
+  google:
+    key: '$(HOST: echo "$SPREAD_GOOGLE_KEY")'
+    location: snapd-spread/us-east1-b
+    plan: n2-standard-2
+    halt-timeout: 2h
+    systems:
+      - ubuntu-core-22-64:
+          image: ubuntu-22.04-64
+          workers: 8
+          storage: 20G
+
+  qemu:
+    memory: 4G
+    systems:
+      - ubuntu-core-22-64:
+          image: ubuntu-22.04-64
+          username: ubuntu
+          password: ubuntu
+          bios: uefi
+
+prepare: |
+  if ! grep '^ID=ubuntu-core$' /etc/os-release; then
+    "${CILIB}/build-image.sh"
+    "${CILIB}/flash.sh" pc.img.gz
+    REBOOT
+  fi
+
+suites:
+  tests/:
+    summary: Tests
