@@ -32,8 +32,8 @@ backends:
 
 prepare: |
   if ! grep '^ID=ubuntu-core$' /etc/os-release; then
-    "${CILIB}/build-image.sh"
-    "${CILIB}/flash.sh" pc.img.gz
+    bash -x "${CILIB}/build-image.sh"
+    bash -x "${CILIB}/flash.sh" pc.img.gz
     REBOOT
   fi
 
