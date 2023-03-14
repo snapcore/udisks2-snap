@@ -1,0 +1,13 @@
+summary: Smoke test
+
+prepare: |
+  snap install --dangerous "${SNAP}"
+  snap connect udisks2:udisks2-client udisks2:udisks2
+  snap connect udisks2:hardware-observe
+  snap connect udisks2:mount-observe
+
+restore: |
+  snap remove udisks2
+
+execute: |
+  udisks2.udisksctl dump
