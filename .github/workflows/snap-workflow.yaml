@@ -111,3 +111,8 @@ jobs:
         with:
           snap: ${{ format('{0}/{1}', steps.download.outputs.download-path, needs.build_snap.outputs.snap_name) }}
           release: ${{ format('{0}/edge', steps.find_branch_name.outputs.release_branch_name) }}
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: logs
+          path: ~/.local/state/snapcraft/log/snapcraft-*.log
