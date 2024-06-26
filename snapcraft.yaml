@@ -5,7 +5,19 @@ description: |
     Udisks2 provides a dbus service that can query and manager
     storages devices as well as a command-line tool.
 confinement: strict
-base: core22
+base: core24
+
+lint:
+  ignore:
+    - library:
+      - usr/lib/**/libbd_*.so*
+      # Used by libbd_mdraid
+      - usr/lib/**/libbytesize.so*
+      - usr/lib/**/libmpfr.so*
+      # Used by libbd_nvme
+      - usr/lib/**/libnvme*.so*
+      # Used by libbd_crypto
+      - usr/lib/**/libvolume_key.so*
 
 slots:
   udisks2-dbus:
@@ -14,7 +26,7 @@ slots:
     name: org.freedesktop.UDisks2
 
   udisks2:
-    udev-file: lib/udev/rules.d/80-udisks2.rules
+    udev-file: usr/lib/udev/rules.d/80-udisks2.rules
 
 plugs:
   udisks2-client:
@@ -75,6 +87,7 @@ parts:
       - libblockdev-swap-dev
       - libblockdev-mdraid-dev
       - libblockdev-fs-dev
+      - libblockdev-nvme-dev
       - libblockdev-crypto-dev
       - libpolkit-agent-1-dev
       - libpolkit-gobject-1-dev
@@ -83,26 +96,25 @@ parts:
       - docbook-xsl
       - polkitd
     stage-packages:
-      - libpolkit-agent-1-0
-      - libpolkit-gobject-1-0
-      - libgudev-1.0-0
-      - libblockdev2
-      - libblockdev-utils2
       - libatasmart4
-      - libblockdev-swap2
-      - libblockdev-loop2
-      - libblockdev-part2
-      - libblockdev-loop2
-      - libblockdev-swap2
-      - libblockdev-mdraid2
-      - libblockdev-fs2
-      - libblockdev-crypto2
+      - libblockdev-crypto3
+      - libblockdev-fs3
+      - libblockdev-loop3
+      - libblockdev-loop3
+      - libblockdev-mdraid3
+      - libblockdev-nvme3
+      - libblockdev-part3
+      - libblockdev-swap3
+      - libblockdev-swap3
+      - libblockdev-utils3
+      - libblockdev3
+      - libgudev-1.0-0
     plugin: autotools
     autotools-configure-parameters:
       - --prefix=/usr
       - --enable-fhs-media
     source-type: git
-    source-branch: applied/ubuntu/jammy
+    source-branch: applied/ubuntu/noble
     source: https://git.launchpad.net/ubuntu/+source/udisks2
     override-pull: |
       craftctl default
